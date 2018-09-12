@@ -10,18 +10,20 @@ import UIKit
 
 class ToDoListVC: UITableViewController {
 
-        let toDoList = ["A" , "B" , "C"]
-    
+    var toDoList = ["A" , "B" , "C"]
+    let defaults = UserDefaults.standard
     @IBOutlet var todo: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        
-        todo.delegate = self
+        if let list = defaults.array(forKey: "ToDoListArray") as? [String] {
+            toDoList = list
+        }
+      todo.delegate = self
     }
     
-    //MARK - TableView DataSource Methods
+    //MARK - TableView DataSource & Delegate Methods
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
@@ -46,8 +48,30 @@ class ToDoListVC: UITableViewController {
         
     }
     
-    //MARK - TableView Delagate Methods
+    //MARK - AddBtnPressed
     
+    @IBAction func AddBtnPressed(_ sender: UIBarButtonItem) {
+        var inputTxtField = UITextField()
+        
+       let alert = UIAlertController(title: "Add New Item", message: "", preferredStyle: .alert)
+       let actionAlert = UIAlertAction(title: "Add", style: .default) { (action) in
+       
+            self.toDoList.append(inputTxtField.text!)
+            self.defaults.set(self.toDoList, forKey: "ToDoListArray")
+            self.tableView.reloadData()
+            
+        }
+        
+       alert.addAction(actionAlert)
+        
+        alert.addTextField { (textField) in
+            inputTxtField = textField
+            textField.placeholder = "Create new item"
+        }
+        
+        present(alert, animated: true, completion: nil)
+    }
+  
     
 
 }
