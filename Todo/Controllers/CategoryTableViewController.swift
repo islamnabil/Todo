@@ -8,17 +8,21 @@
 
 import UIKit
 import CoreData
-class CategoryTableViewController: UITableViewController {
+import SwipeCellKit
+
+class CategoryTableViewController: UITableViewController  {
      var categoryItems = [Category]()
     
-    //let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
    
     @IBOutlet var CategoryCell: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.rowHeight = 80.0
        LoadCategories()
+        print("FILE : \(dataFilePath)")
     }
 
     @IBAction func AddBtnPressed(_ sender: UIBarButtonItem) {
@@ -50,7 +54,9 @@ class CategoryTableViewController: UITableViewController {
     
     //MARK: - TableView Datasource Methods
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell  = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        let cell  = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
+        cell.delegate = self
+        
         let item = categoryItems[indexPath.row]
         cell.textLabel?.text = item.name
         return cell
@@ -66,6 +72,7 @@ class CategoryTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "goToItems", sender: self)
     }
+    
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
        let destinationVC = segue.destination as! ToDoListVC
@@ -100,4 +107,34 @@ class CategoryTableViewController: UITableViewController {
         tableView.reloadData()
         
     }
+}
+//MARK: - Swipe Cell Delegate Method
+
+extension CategoryTableViewController : SwipeTableViewCellDelegate {
+    
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+        guard orientation == .right else { return nil }
+        
+        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+            // handle action by updating model with deletion
+            let deletedItem  = self.categoryItems.remove(at: indexPath.row)
+            self.context.delete(deletedItem)
+            self.saveCategories()
+        }
+        
+        // customize the action appearance
+        deleteAction.image = UIImage(named: "delete-icon")
+        
+        return [deleteAction]
+    }
+    
+    
+    func collectionView(_ collectionView: UICollectionView, editActionsOptionsForItemAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
+        var options = SwipeOptions()
+        options.expansionStyle = .destructive
+        options.transitionStyle = .border
+        return options
+    }
+    
+    
 }
